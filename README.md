@@ -42,7 +42,7 @@ export const plugin = createInstallerPlugin({
 })
 ```
 
-`sourceUrl` is optional in a template repo. Pass `sourceUrl: import.meta.url` when using `openkit/install` from an external dependency.
+`sourceUrl` is optional in a template repo. Pass `sourceUrl: import.meta.url` when using `@itlackey/openkit/install` from an external dependency.
 
 ### 4) Install in a project
 
@@ -68,10 +68,10 @@ When OpenCode starts, the installer copies your `opencode/` files into the proje
 
 ## Use as a dependency
 
-Don't want to clone the template? Install `openkit` directly and import the helper.
+Don't want to clone the template? Install from GitHub and import the helper from `@itlackey/openkit`.
 
 ```bash
-bun add openkit
+bun add itlackey/openkit
 ```
 
 If you also register tools directly in your plugin, add `@opencode-ai/plugin` too.
@@ -81,7 +81,7 @@ If you also register tools directly in your plugin, add `@opencode-ai/plugin` to
 Use this when your package only ships file-based extensions:
 
 ```typescript
-import { createInstallerPlugin } from "openkit/install"
+import { createInstallerPlugin } from "@itlackey/openkit/install"
 export const plugin = createInstallerPlugin({
   name: "my-opencode-extension",
   sourceUrl: import.meta.url, // required when used as a dependency
@@ -94,7 +94,7 @@ Mix the installer with your own tools and hooks:
 
 ```typescript
 import { type Plugin, tool } from "@opencode-ai/plugin"
-import { installExtensions } from "openkit/install"
+import { installExtensions } from "@itlackey/openkit/install"
 export const plugin: Plugin = async (input) => {
   await installExtensions({
     sourceUrl: import.meta.url,
@@ -131,12 +131,12 @@ export const plugin: Plugin = async (input) => {
 }
 ```
 
-When using `openkit/install` instead of local helpers:
+When using `@itlackey/openkit/install` instead of local helpers:
 
 ```json
 {
   "dependencies": {
-    "openkit": "^0.1.0"
+    "@itlackey/openkit": "^0.1.0"
   }
 }
 ```

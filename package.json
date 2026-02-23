@@ -1,5 +1,5 @@
 {
-  "name": "openkit",
+  "name": "@itlackey/openkit",
   "version": "0.1.0",
   "type": "module",
   "description": "Developer toolkit to package and publish OpenCode extensions (agents, commands, plugins, skills, tools, themes) as one npm plugin.",
@@ -8,7 +8,7 @@
     "opencode-ai",
     "opencode-plugin",
     "opencode-extensions",
-    "opencode-extension-template",
+    "openkit",
     "ai-agent",
     "agent-framework",
     "developer-tools",
