@@ -76,6 +76,9 @@ export function createInstallerPlugin(options: InstallerOptions): Plugin {
             (status) => !!status && typeof status === "object" && "type" in status && status.type !== "idle",
           )
         } catch {
+          console.warn(
+            `[${options.name}] unable to verify session status before reload; skipping auto-reload to avoid interrupting active sessions (manual restart may be required)`,
+          )
           return true
         }
       })()
