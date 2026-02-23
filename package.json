@@ -1,0 +1,31 @@
+{
+  "name": "openkit",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Template for packaging OpenCode extensions (agents, commands, plugins, skills, tools, themes) as a single npm package with a reusable install helper.",
+  "keywords": [
+    "opencode",
+    "opencode-ai",
+    "agent",
+    "plugin",
+    "tools",
+    "skills",
+    "commands",
+    "themes"
+  ],
+  "license": "CC-BY-4.0",
+  "files": [
+    "src",
+    "helpers",
+    "opencode",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./src/plugin.ts",
+    "./install": "./helpers/install.ts"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.2.10"
+  }
+}
