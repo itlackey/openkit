@@ -1,214 +1,171 @@
 # OpenKit
 
-A GitHub template for packaging **all OpenCode extension types** into a single npm package. Drop files into `opencode/` and the installer plugin handles the rest.
+Ship production-ready [OpenCode](https://opencode.ai) extensions as one npm package.
 
-## Extension types
+OpenKit gives you a clean packaging pattern for agents, commands, plugins, skills, tools, and themes. Add files to `opencode/`, publish once, and your users install with a single plugin entry.
 
-| Type | Source directory | Description |
-|---|---|---|
-| Agents | `opencode/agents/` | Markdown agent definitions |
-| Commands | `opencode/commands/` | Markdown slash commands |
-| Plugins | `opencode/plugins/` | File-based plugins (TypeScript, full Plugin API) |
-| Skills | `opencode/skills/<name>/SKILL.md` | Discoverable prompt templates |
-| Tools | `opencode/tools/` | Custom tools (TypeScript) |
-| Themes | `opencode/themes/` | JSON color themes |
+OpenKit is built for teams publishing **OpenCode plugins** and **OpenCode extension packs** to npm.
 
-## How it works
+## Why developers use OpenKit
 
-The only required TypeScript in this package is a thin installer plugin built with `createInstallerPlugin()`. When OpenCode loads it, it copies everything from the package's `opencode/` directory into the project's `.opencode/` directory. After that, OpenCode's native file-based discovery picks up all the extensions — including any file-based plugins, tools, agents, commands, skills, and themes.
-
-Files that already exist in `.opencode/` are skipped so user customizations are preserved.
+- **One package, full extension surface**: ship commands, agents, skills, tools, plugins, and themes together.
+- **Safe installs by default**: existing user files are preserved (`overwrite: false`).
+- **Works with real plugin code**: use standalone installer mode or compose it into your own plugin.
+- **Low maintenance**: no custom copy scripts or postinstall hacks.
 
 ## Quick start
 
-### 1) Use as a template
+### 1) Create from template
 
-Click **Use this template** on GitHub, then update the `name` in `package.json`.
+Click **Use this template** on GitHub, then update `name` in `package.json`.
 
-### 2) Add your extensions
+### 2) Add extensions
 
-Drop files into the appropriate `opencode/` subdirectory:
-
+Drop files into the matching subdirectory:
 ```
 opencode/
-├── agents/       # .md files
-├── commands/     # .md files
-├── plugins/      # .ts files (full Plugin API)
-├── skills/       # <name>/SKILL.md
-├── tools/        # .ts files
-└── themes/       # .json files
+├── agents/       # .md    — agent definitions (primary or subagent)
+├── commands/     # .md    — slash commands
+├── plugins/      # .ts    — full Plugin API
+├── skills/       # SKILL.md in named folders
+├── tools/        # .ts    — custom tools
+└── themes/       # .json  — color themes
 ```
 
-### 3) Update the plugin name
+### 3) Export the installer plugin
 
-In `src/plugin.ts`, change the name to match your package:
-
+In `src/plugin.ts`:
 ```typescript
 import { createInstallerPlugin } from "../helpers/install"
-
 export const plugin = createInstallerPlugin({
-  name: "my-extension",
+  name: "my-opencode-extension",
 })
 ```
 
-That's it. Everything else is just files in `opencode/`.
+`sourceUrl` is optional in a template repo. Pass `sourceUrl: import.meta.url` when using `openkit/install` from an external dependency.
 
-### 4) Enable in a project
-
-Add to `opencode.json`:
+### 4) Install in a project
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["your-package-name"]
+  "plugin": ["my-opencode-extension"]
 }
 ```
 
-### 5) Try the included examples
+When OpenCode starts, the installer copies your `opencode/` files into the project's `.opencode/` directory. Existing files are never overwritten by default, so user customizations stay intact.
 
-- `/hello` — example command
-- `@review` — example agent (read-only code review subagent)
-- `hello-skill` — example skill
-- `hello` tool — example file-based custom tool
-- `greet` tool — example tool registered by a file-based plugin
-- `template-dark` — example theme
+## Included examples
 
-## Using as a dependency
+| Extension | Type | Try it |
+|---|---|---|
+| `/hello` | Command | Slash command |
+| `@review` | Agent | Read-only code review subagent |
+| `hello-skill` | Skill | Prompt template |
+| `hello` | Tool | File-based custom tool |
+| `greet` | Tool | Plugin-registered tool |
+| `template-dark` | Theme | Dark color theme |
 
-Instead of cloning the template, you can add `openkit` as a dependency and import `createInstallerPlugin` into your own project. This is useful when you want to build an extension package from scratch or integrate the installer into an existing project.
+## Use as a dependency
 
-### 1) Create your package
+Don't want to clone the template? Install `openkit` directly and import the helper.
 
 ```bash
-mkdir my-opencode-extension && cd my-opencode-extension
-bun init
-bun add openkit @opencode-ai/plugin
+bun add openkit
 ```
 
-### 2) Set up your repo layout
+If you also register tools directly in your plugin, add `@opencode-ai/plugin` too.
 
-```
-my-opencode-extension/
-├── src/
-│   └── plugin.ts            # Installer plugin (see below)
-├── opencode/                # Your extension files
-│   ├── agents/
-│   │   └── my-agent.md
-│   ├── commands/
-│   │   └── my-command.md
-│   ├── plugins/
-│   │   └── my-plugin.ts
-│   ├── skills/
-│   │   └── my-skill/
-│   │       └── SKILL.md
-│   ├── tools/
-│   │   └── my-tool.ts
-│   └── themes/
-│       └── my-theme.json
-├── package.json
-└── tsconfig.json
-```
+### Standalone installer
 
-You only need the subdirectories for extension types you're using — empty directories can be omitted.
-
-### 3) Create the installer plugin
-
-**New plugin** — if your package only needs to install file-based extensions, the installer plugin is all you need. Pass `sourceUrl` so the helper can locate your package's `opencode/` directory (required when importing from a dependency, since `import.meta.url` inside the helper would otherwise resolve to the dependency's location, not yours):
+Use this when your package only ships file-based extensions:
 
 ```typescript
 import { createInstallerPlugin } from "openkit/install"
-
 export const plugin = createInstallerPlugin({
   name: "my-opencode-extension",
-  sourceUrl: import.meta.url,
+  sourceUrl: import.meta.url, // required when used as a dependency
 })
 ```
 
-**Existing plugin** — if you already have a plugin that registers hooks, tools, or auth, you can add the installer alongside your existing logic. Import `installExtensions` from `openkit/install` and call it at the start of your plugin function:
+### Compose with an existing plugin
+
+Mix the installer with your own tools and hooks:
 
 ```typescript
 import { type Plugin, tool } from "@opencode-ai/plugin"
 import { installExtensions } from "openkit/install"
-
 export const plugin: Plugin = async (input) => {
-  // Install file-based extensions from this package's opencode/ directory
   await installExtensions({
     sourceUrl: import.meta.url,
     targetDir: input.directory,
     name: "my-opencode-extension",
   })
-
-  // Your existing plugin logic
   return {
     tool: {
       "my-tool": tool({
-        description: "My custom tool",
-        args: { query: tool.schema.string().describe("Search query") },
-        async execute({ query }) {
-          return `Result for: ${query}`
+        description: "Example tool",
+        args: {
+          message: tool.schema.string().describe("Message to echo"),
+        },
+        async execute({ message }) {
+          return `my-tool: ${message}`
         },
       }),
-    },
-    event: async ({ event }) => {
-      // handle events
     },
   }
 }
 ```
 
-### 4) Configure package.json
+### package.json essentials
 
 ```json
 {
   "name": "my-opencode-extension",
   "type": "module",
-  "exports": {
-    ".": "./src/plugin.ts"
-  },
-  "files": ["src", "opencode"],
+  "exports": { ".": "./src/plugin.ts" },
+  "files": ["src", "opencode", "helpers"],
   "dependencies": {
-    "openkit": "^0.1.0",
     "@opencode-ai/plugin": "^1.2.10"
   }
 }
 ```
 
-The key fields:
-- **`exports`** — points directly to your TypeScript plugin so OpenCode can load it
-- **`files`** — includes `opencode/` so your extension files are published with the package
-
-### 5) Test it
-
-Add your package to a project's `opencode.json`:
+When using `openkit/install` instead of local helpers:
 
 ```json
 {
-  "plugin": ["my-opencode-extension"]
+  "dependencies": {
+    "openkit": "^0.1.0"
+  }
 }
 ```
 
-When OpenCode starts, it installs your package, runs the installer plugin, and copies your extension files into `.opencode/`.
-
-### Options
+## Installer options
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `name` | yes | — | Label for log messages. |
-| `dirs` | no | all 6 types | Which subdirectories to install. |
-| `overwrite` | no | `false` | Overwrite existing files. |
-| `sourceUrl` | no | — | Required when importing as a dependency. Pass `import.meta.url`. |
+| `name` | yes | — | Label for log messages |
+| `dirs` | no | all 6 types | Limit which subdirectories to install |
+| `overwrite` | no | `false` | Overwrite existing files |
+| `sourceUrl` | no | — | Pass `import.meta.url` when used as a dependency |
 
+## Publish checklist
 
-## References
+Before running `npm publish`:
+
+- Use a clear package name (`my-opencode-extension`) and concise description.
+- Add searchable keywords like `opencode`, `opencode-plugin`, `opencode-extension`.
+- Confirm `exports` points to your plugin entry (`./src/plugin.ts`).
+- Ensure `files` includes everything users need (`src`, `opencode`, and any helper dir you import).
+- Test installation with a real `opencode.json` plugin entry in a sample project.
+
+## Docs
 
 - [Plugins](https://opencode.ai/docs/plugins/)
 - [Commands](https://opencode.ai/docs/commands/)
 - [Agents](https://opencode.ai/docs/agents/)
-- [Skills](https://opencode.ai/docs/skills/)
+- [Agent Skills](https://opencode.ai/docs/skills/)
 - [Custom tools](https://opencode.ai/docs/custom-tools/)
 - [Themes](https://opencode.ai/docs/themes/)
 - [Config](https://opencode.ai/docs/config/)
-
-## License
-
-[CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)

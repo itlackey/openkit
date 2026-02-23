@@ -2,10 +2,17 @@
   "name": "openkit",
   "version": "0.1.0",
   "type": "module",
-  "description": "Template for packaging OpenCode extensions (agents, commands, plugins, skills, tools, themes) as a single npm package with a reusable install helper.",
+  "description": "Developer toolkit to package and publish OpenCode extensions (agents, commands, plugins, skills, tools, themes) as one npm plugin.",
   "keywords": [
     "opencode",
     "opencode-ai",
+    "opencode-plugin",
+    "opencode-extensions",
+    "opencode-extension-template",
+    "ai-agent",
+    "agent-framework",
+    "developer-tools",
+    "npm-template",
     "agent",
     "plugin",
     "tools",
@@ -13,6 +20,14 @@
     "commands",
     "themes"
   ],
+  "homepage": "https://github.com/itlackey/openkit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itlackey/openkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/itlackey/openkit/issues"
+  },
   "license": "CC-BY-4.0",
   "files": [
     "src",
@@ -24,6 +39,9 @@
   "exports": {
     ".": "./src/plugin.ts",
     "./install": "./helpers/install.ts"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@opencode-ai/plugin": "^1.2.10"
