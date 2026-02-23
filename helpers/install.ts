@@ -65,9 +65,13 @@ export function createInstallerPlugin(options: InstallerOptions): Plugin {
     const { created } = await installExtensions({ ...options, targetDir: input.directory })
     if (created.length > 0) {
       try {
+        // Trigger OpenCode reload by disposing the current instance.
         await input.client.instance.dispose()
       } catch (error) {
-        console.warn(`[${options.name}] failed to reload OpenCode config`, error)
+        console.warn(
+          `[${options.name}] installed extensions, but failed to reload OpenCode config (manual restart may be required)`,
+          error,
+        )
       }
     }
     return {}
