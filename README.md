@@ -198,23 +198,6 @@ When OpenCode starts, it installs your package, runs the installer plugin, and c
 | `overwrite` | no | `false` | Overwrite existing files. |
 | `sourceUrl` | no | — | Required when importing as a dependency. Pass `import.meta.url`. |
 
-## File layout (this template)
-
-```
-src/
-└── plugin.ts                   # One-liner: createInstallerPlugin({ name: "..." })
-
-helpers/
-└── install.ts                  # createInstallerPlugin factory (reusable)
-
-opencode/                       # Extension files — copied into .opencode/ at load time
-├── agents/review.md            # Example agent
-├── commands/hello.md           # Example command
-├── plugins/hello-plugin.ts     # Example file-based plugin
-├── skills/hello-skill/SKILL.md # Example skill
-├── tools/hello.ts              # Example tool
-└── themes/template-dark.json   # Example theme
-`
 
 ## References
 
