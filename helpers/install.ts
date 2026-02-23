@@ -64,6 +64,27 @@ export function createInstallerPlugin(options: InstallerOptions): Plugin {
   return async (input) => {
     const { created } = await installExtensions({ ...options, targetDir: input.directory })
     if (created.length > 0) {
+      const hasActiveSessions = await (async () => {
+        try {
+          const statusResult = await input.client.session.status()
+          const statuses =
+            statusResult && typeof statusResult === "object" && "data" in statusResult
+              ? statusResult.data
+              : statusResult
+          if (!statuses || typeof statuses !== "object") return false
+          return Object.values(statuses).some(
+            (status) => !!status && typeof status === "object" && "type" in status && status.type !== "idle",
+          )
+        } catch {
+          return true
+        }
+      })()
+      if (hasActiveSessions) {
+        console.warn(
+          `[${options.name}] installed extensions, but skipped auto-reload because active sessions are running (manual restart may be required)`,
+        )
+        return {}
+      }
       try {
         // Trigger OpenCode reload by disposing the current instance.
         await input.client.instance.dispose()
