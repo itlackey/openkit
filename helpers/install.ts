@@ -28,7 +28,7 @@ export interface InstallerOptions {
  */
 export async function installExtensions(
   options: InstallerOptions & { targetDir: string },
-): Promise<{ copied: string[]; skipped: string[] }> {
+): Promise<{ copied: string[]; skipped: string[]; created: string[] }> {
   const { name, targetDir, dirs = DEFAULT_DIRS, overwrite = false, sourceUrl } = options
 
   const resolvedUrl = sourceUrl ?? import.meta.url
@@ -38,20 +38,21 @@ export async function installExtensions(
 
   const copied: string[] = []
   const skipped: string[] = []
+  const created: string[] = []
 
-  if (!fs.existsSync(source)) return { copied, skipped }
+  if (!fs.existsSync(source)) return { copied, skipped, created }
 
   for (const dir of dirs) {
     const src = path.join(source, dir)
     if (!fs.existsSync(src)) continue
-    copyDir(src, path.join(target, dir), { overwrite, copied, skipped })
+    copyDir(src, path.join(target, dir), { overwrite, copied, skipped, created })
   }
 
   if (copied.length > 0) {
     console.log(`[${name}] installed ${copied.length} extension file(s) into ${target}`)
   }
 
-  return { copied, skipped }
+  return { copied, skipped, created }
 }
 
 /**
@@ -61,7 +62,42 @@ export async function installExtensions(
  */
 export function createInstallerPlugin(options: InstallerOptions): Plugin {
   return async (input) => {
-    await installExtensions({ ...options, targetDir: input.directory })
+    const { created } = await installExtensions({ ...options, targetDir: input.directory })
+    if (created.length > 0) {
+      const hasActiveSessions = await (async () => {
+        try {
+          const statusResult = await input.client.session.status()
+          const statuses =
+            statusResult && typeof statusResult === "object" && "data" in statusResult
+              ? statusResult.data
+              : statusResult
+          if (!statuses || typeof statuses !== "object") return false
+          return Object.values(statuses).some(
+            (status) => !!status && typeof status === "object" && "type" in status && status.type !== "idle",
+          )
+        } catch {
+          console.warn(
+            `[${options.name}] unable to verify session status before reload; skipping auto-reload to avoid interrupting active sessions (manual restart may be required)`,
+          )
+          return true
+        }
+      })()
+      if (hasActiveSessions) {
+        console.warn(
+          `[${options.name}] installed extensions, but skipped auto-reload because active sessions are running (manual restart may be required)`,
+        )
+        return {}
+      }
+      try {
+        // Trigger OpenCode reload by disposing the current instance.
+        await input.client.instance.dispose()
+      } catch (error) {
+        console.warn(
+          `[${options.name}] installed extensions, but failed to reload OpenCode config (manual restart may be required)`,
+          error,
+        )
+      }
+    }
     return {}
   }
 }
@@ -69,7 +105,7 @@ export function createInstallerPlugin(options: InstallerOptions): Plugin {
 function copyDir(
   src: string,
   dest: string,
-  ctx: { overwrite: boolean; copied: string[]; skipped: string[] },
+  ctx: { overwrite: boolean; copied: string[]; skipped: string[]; created: string[] },
 ) {
   fs.mkdirSync(dest, { recursive: true })
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
@@ -78,12 +114,14 @@ function copyDir(
     if (entry.isDirectory()) {
       copyDir(s, d, ctx)
     } else if (entry.isFile()) {
-      if (!ctx.overwrite && fs.existsSync(d)) {
+      const exists = fs.existsSync(d)
+      if (!ctx.overwrite && exists) {
         ctx.skipped.push(d)
       } else {
         fs.mkdirSync(path.dirname(d), { recursive: true })
         fs.copyFileSync(s, d)
         ctx.copied.push(d)
+        if (!exists) ctx.created.push(d)
       }
     }
   }
