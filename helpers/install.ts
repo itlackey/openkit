@@ -86,14 +86,27 @@ export function createInstallerPlugin(options: InstallerOptions): Plugin {
     // Register them programmatically via the config hook for immediate use.
     const agents = dirs.has("agents") ? loadAgents(sourceDir, options.name) : {}
     const commands = dirs.has("commands") ? loadCommands(sourceDir, options.name) : {}
+    const skills = dirs.has("skills") ? loadSkills(sourceDir, options.name) : {}
+    const themes = dirs.has("themes") ? loadThemes(sourceDir, options.name) : {}
 
-    if (Object.keys(agents).length > 0 || Object.keys(commands).length > 0) {
+    if (
+      Object.keys(agents).length > 0 ||
+      Object.keys(commands).length > 0 ||
+      Object.keys(skills).length > 0 ||
+      Object.keys(themes).length > 0
+    ) {
       hooks.config = async (config: Record<string, any>) => {
         if (Object.keys(agents).length > 0) {
-          config.agent = { ...config.agent, ...agents }
+          config.agent = mergeRecord(config.agent, agents)
         }
         if (Object.keys(commands).length > 0) {
-          config.command = { ...config.command, ...commands }
+          config.command = mergeRecord(config.command, commands)
+        }
+        if (Object.keys(skills).length > 0) {
+          config.skills = mergeRecord(config.skills, skills)
+        }
+        if (Object.keys(themes).length > 0) {
+          config.themes = mergeRecord(config.themes, themes)
         }
       }
     }
@@ -208,6 +221,44 @@ function loadCommands(sourceDir: string, pluginName: string): Record<string, unk
   return result
 }
 
+function loadSkills(sourceDir: string, pluginName: string): Record<string, unknown> {
+  const dir = path.join(sourceDir, "skills")
+  if (!fs.existsSync(dir)) return {}
+
+  const result: Record<string, unknown> = {}
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    const skillFile = path.join(dir, entry.name, "SKILL.md")
+    if (!fs.existsSync(skillFile)) continue
+    try {
+      const raw = fs.readFileSync(skillFile, "utf8")
+      const { data, content } = parseFrontmatter(raw)
+      result[entry.name] = { ...data, prompt: content.trim() }
+    } catch (err) {
+      console.warn(`[${pluginName}] failed to parse skill ${entry.name}`, err)
+    }
+  }
+  return result
+}
+
+function loadThemes(sourceDir: string, pluginName: string): Record<string, unknown> {
+  const dir = path.join(sourceDir, "themes")
+  if (!fs.existsSync(dir)) return {}
+
+  const result: Record<string, unknown> = {}
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".json")) continue
+    try {
+      const raw = fs.readFileSync(path.join(dir, entry.name), "utf8")
+      const name = path.basename(entry.name, ".json")
+      result[name] = JSON.parse(raw)
+    } catch (err) {
+      console.warn(`[${pluginName}] failed to parse theme ${entry.name}`, err)
+    }
+  }
+  return result
+}
+
 async function loadPlugins(
   sourceDir: string,
   input: PluginInput,
@@ -269,6 +320,15 @@ function isToolDefinition(value: unknown): value is ToolDefinition {
   }
   const candidate = value as { execute?: unknown }
   return typeof candidate.execute === "function"
+}
+
+function mergeRecord(
+  current: unknown,
+  additions: Record<string, unknown>,
+): Record<string, unknown> {
+  return typeof current === "object" && current !== null && !Array.isArray(current)
+    ? { ...(current as Record<string, unknown>), ...additions }
+    : { ...additions }
 }
 
 // ---------------------------------------------------------------------------
