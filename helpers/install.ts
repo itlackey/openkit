@@ -237,9 +237,10 @@ async function loadPlugins(
 
 async function loadTools(
   sourceDir: string,
-  _input: PluginInput,
+  input: PluginInput,
   pluginName: string,
 ): Promise<Record<string, ToolDefinition>> {
+  void input
   const dir = path.join(sourceDir, "tools")
   if (!fs.existsSync(dir)) return {}
 
@@ -250,8 +251,8 @@ async function loadTools(
     try {
       const mod = await import(pathToFileURL(path.join(dir, entry)).href)
       for (const [exportName, value] of Object.entries(mod)) {
-        const definition = value as ToolDefinition | undefined
-        if (!definition || typeof definition !== "object") continue
+        if (!isToolDefinition(value)) continue
+        const definition = value
         const name = exportName === "default" ? baseName : `${baseName}_${exportName}`
         tools[name] = definition
       }
@@ -260,6 +261,14 @@ async function loadTools(
     }
   }
   return tools
+}
+
+function isToolDefinition(value: unknown): value is ToolDefinition {
+  if (typeof value !== "object" || value === null) {
+    return false
+  }
+  const candidate = value as { execute?: unknown }
+  return typeof candidate.execute === "function"
 }
 
 // ---------------------------------------------------------------------------
