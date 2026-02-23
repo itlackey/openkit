@@ -86,14 +86,27 @@ export function createInstallerPlugin(options: InstallerOptions): Plugin {
     // Register them programmatically via the config hook for immediate use.
     const agents = dirs.has("agents") ? loadAgents(sourceDir, options.name) : {}
     const commands = dirs.has("commands") ? loadCommands(sourceDir, options.name) : {}
+    const skills = dirs.has("skills") ? loadSkills(sourceDir, options.name) : {}
+    const themes = dirs.has("themes") ? loadThemes(sourceDir, options.name) : {}
 
-    if (Object.keys(agents).length > 0 || Object.keys(commands).length > 0) {
+    if (
+      Object.keys(agents).length > 0 ||
+      Object.keys(commands).length > 0 ||
+      Object.keys(skills).length > 0 ||
+      Object.keys(themes).length > 0
+    ) {
       hooks.config = async (config: Record<string, any>) => {
         if (Object.keys(agents).length > 0) {
-          config.agent = { ...config.agent, ...agents }
+          config.agent = mergeRecord(config.agent, agents)
         }
         if (Object.keys(commands).length > 0) {
-          config.command = { ...config.command, ...commands }
+          config.command = mergeRecord(config.command, commands)
+        }
+        if (Object.keys(skills).length > 0) {
+          config.skills = mergeRecord(config.skills, skills)
+        }
+        if (Object.keys(themes).length > 0) {
+          config.themes = mergeRecord(config.themes, themes)
         }
       }
     }
@@ -107,8 +120,13 @@ export function createInstallerPlugin(options: InstallerOptions): Plugin {
       }
     }
 
-    // Tools, skills, and themes are loaded lazily by OpenCode after plugins
-    // initialise, so the copied files will be discovered automatically.
+    // Register tools immediately so they're available in the first session.
+    if (dirs.has("tools")) {
+      const tools = await loadTools(sourceDir, input, options.name)
+      if (Object.keys(tools).length > 0) {
+        hooks.tool = { ...hooks.tool, ...tools }
+      }
+    }
 
     return hooks
   }
@@ -203,6 +221,44 @@ function loadCommands(sourceDir: string, pluginName: string): Record<string, unk
   return result
 }
 
+function loadSkills(sourceDir: string, pluginName: string): Record<string, unknown> {
+  const dir = path.join(sourceDir, "skills")
+  if (!fs.existsSync(dir)) return {}
+
+  const result: Record<string, unknown> = {}
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    const skillFile = path.join(dir, entry.name, "SKILL.md")
+    if (!fs.existsSync(skillFile)) continue
+    try {
+      const raw = fs.readFileSync(skillFile, "utf8")
+      const { data, content } = parseFrontmatter(raw)
+      result[entry.name] = { ...data, prompt: content.trim() }
+    } catch (err) {
+      console.warn(`[${pluginName}] failed to parse skill ${entry.name}`, err)
+    }
+  }
+  return result
+}
+
+function loadThemes(sourceDir: string, pluginName: string): Record<string, unknown> {
+  const dir = path.join(sourceDir, "themes")
+  if (!fs.existsSync(dir)) return {}
+
+  const result: Record<string, unknown> = {}
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".json")) continue
+    try {
+      const raw = fs.readFileSync(path.join(dir, entry.name), "utf8")
+      const name = path.basename(entry.name, ".json")
+      result[name] = JSON.parse(raw)
+    } catch (err) {
+      console.warn(`[${pluginName}] failed to parse theme ${entry.name}`, err)
+    }
+  }
+  return result
+}
+
 async function loadPlugins(
   sourceDir: string,
   input: PluginInput,
@@ -228,6 +284,51 @@ async function loadPlugins(
     }
   }
   return hooksList
+}
+
+async function loadTools(
+  sourceDir: string,
+  input: PluginInput,
+  pluginName: string,
+): Promise<Record<string, ToolDefinition>> {
+  void input
+  const dir = path.join(sourceDir, "tools")
+  if (!fs.existsSync(dir)) return {}
+
+  const tools: Record<string, ToolDefinition> = {}
+  for (const entry of fs.readdirSync(dir)) {
+    if (!entry.endsWith(".ts") && !entry.endsWith(".js")) continue
+    const baseName = path.basename(entry, path.extname(entry))
+    try {
+      const mod = await import(pathToFileURL(path.join(dir, entry)).href)
+      for (const [exportName, value] of Object.entries(mod)) {
+        if (!isToolDefinition(value)) continue
+        const definition = value
+        const name = exportName === "default" ? baseName : `${baseName}_${exportName}`
+        tools[name] = definition
+      }
+    } catch (err) {
+      console.warn(`[${pluginName}] failed to load tool ${entry}`, err)
+    }
+  }
+  return tools
+}
+
+function isToolDefinition(value: unknown): value is ToolDefinition {
+  if (typeof value !== "object" || value === null) {
+    return false
+  }
+  const candidate = value as { execute?: unknown }
+  return typeof candidate.execute === "function"
+}
+
+function mergeRecord(
+  current: unknown,
+  additions: Record<string, unknown>,
+): Record<string, unknown> {
+  return typeof current === "object" && current !== null && !Array.isArray(current)
+    ? { ...(current as Record<string, unknown>), ...additions }
+    : { ...additions }
 }
 
 // ---------------------------------------------------------------------------
