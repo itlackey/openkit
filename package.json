@@ -1,6 +1,6 @@
 {
   "name": "@itlackey/openkit",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "type": "module",
   "description": "Developer toolkit to package and publish OpenCode extensions (agents, commands, plugins, skills, tools, themes) as one npm plugin.",
   "keywords": [
