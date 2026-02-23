@@ -107,8 +107,13 @@ export function createInstallerPlugin(options: InstallerOptions): Plugin {
       }
     }
 
-    // Tools, skills, and themes are loaded lazily by OpenCode after plugins
-    // initialise, so the copied files will be discovered automatically.
+    // Register tools immediately so they're available in the first session.
+    if (dirs.has("tools")) {
+      const tools = await loadTools(sourceDir, input, options.name)
+      if (Object.keys(tools).length > 0) {
+        hooks.tool = { ...hooks.tool, ...tools }
+      }
+    }
 
     return hooks
   }
@@ -228,6 +233,33 @@ async function loadPlugins(
     }
   }
   return hooksList
+}
+
+async function loadTools(
+  sourceDir: string,
+  _input: PluginInput,
+  pluginName: string,
+): Promise<Record<string, ToolDefinition>> {
+  const dir = path.join(sourceDir, "tools")
+  if (!fs.existsSync(dir)) return {}
+
+  const tools: Record<string, ToolDefinition> = {}
+  for (const entry of fs.readdirSync(dir)) {
+    if (!entry.endsWith(".ts") && !entry.endsWith(".js")) continue
+    const baseName = path.basename(entry, path.extname(entry))
+    try {
+      const mod = await import(pathToFileURL(path.join(dir, entry)).href)
+      for (const [exportName, value] of Object.entries(mod)) {
+        const definition = value as ToolDefinition | undefined
+        if (!definition || typeof definition !== "object") continue
+        const name = exportName === "default" ? baseName : `${baseName}_${exportName}`
+        tools[name] = definition
+      }
+    } catch (err) {
+      console.warn(`[${pluginName}] failed to load tool ${entry}`, err)
+    }
+  }
+  return tools
 }
 
 // ---------------------------------------------------------------------------
