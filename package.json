@@ -30,18 +30,36 @@
   },
   "license": "CC-BY-4.0",
   "files": [
+    "dist",
     "src",
     "helpers",
     "opencode",
     "README.md",
     "LICENSE"
   ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/plugin.ts",
-    "./install": "./helpers/install.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./install": {
+      "types": "./dist/install.d.ts",
+      "default": "./dist/install.js"
+    }
+  },
+  "scripts": {
+    "build": "bun build ./src/index.ts ./src/install.ts --outdir ./dist --target node --format esm",
+    "build:types": "tsc --project ./tsconfig.build.json && node -e \"const fs=require('node:fs');fs.writeFileSync('dist/index.d.ts','export { plugin } from \\\"./src/plugin\\\"\\\\n');fs.writeFileSync('dist/install.d.ts','export { createInstallerPlugin, installExtensions, type InstallerOptions } from \\\"./src/install\\\"\\\\n');\"",
+    "prepublishOnly": "npm run build && npm run build:types"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@opencode-ai/plugin": "^1.2.10"

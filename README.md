@@ -123,8 +123,15 @@ export const plugin: Plugin = async (input) => {
 {
   "name": "my-opencode-extension",
   "type": "module",
-  "exports": { ".": "./src/plugin.ts" },
-  "files": ["src", "opencode", "helpers"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "opencode", "helpers"],
   "dependencies": {
     "@opencode-ai/plugin": "^1.2.10"
   }
@@ -156,8 +163,8 @@ Before running `npm publish`:
 
 - Use a clear package name (`my-opencode-extension`) and concise description.
 - Add searchable keywords like `opencode`, `opencode-plugin`, `opencode-extension`.
-- Confirm `exports` points to your plugin entry (`./src/plugin.ts`).
-- Ensure `files` includes everything users need (`src`, `opencode`, and any helper dir you import).
+- Confirm `main`/`exports` point to compiled JS in `dist/` and `types` points to declarations.
+- Ensure `files` includes everything users need (`dist`, `opencode`, and any helper dir you import).
 - Test installation with a real `opencode.json` plugin entry in a sample project.
 
 ## Docs
