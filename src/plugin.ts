@@ -1,4 +1,4 @@
-import { createInstallerPlugin } from "../helpers/install"
+import { createInstallerPlugin } from "./install"
 
 /**
  * Installer plugin — copies file-based extensions from this package's

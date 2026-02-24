@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { add } from "../helpers/add"
-import { remove } from "../helpers/remove"
-import { search, type SearchResult } from "../helpers/registry"
+import { add } from "./add"
+import { remove } from "./remove"
+import { search, type SearchResult } from "./registry"
 
 const HELP = `
 openkit — CLI for managing OpenCode extension packages
