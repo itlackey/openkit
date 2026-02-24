@@ -49,7 +49,7 @@
     },
     "./install": {
       "types": "./dist/install.d.ts",
-      "default": "./dist/install.js"
+      "default": "./dist/src/install.js"
     }
   },
   "scripts": {
