@@ -1,5 +1,4 @@
 import { tool } from "@opencode-ai/plugin";
-
 /**
  * Custom tool example (loaded from .opencode/tools/*.ts or ~/.config/opencode/tools/*.ts).
  *

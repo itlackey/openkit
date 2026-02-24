@@ -77,7 +77,7 @@ export function createInstallerPlugin(options: InstallerOptions): Plugin {
     const sourceDir = path.join(packageRoot, "opencode")
     const dirs = new Set(options.dirs ?? DEFAULT_DIRS)
 
-    console.log(`[${options.name}] registering ${created.length} new extension(s) for current session`)
+    console.log(`[${options.name}] registering ${created.length} new openkit extension(s) for current session`)
 
     let hooks: Hooks = {}
 
