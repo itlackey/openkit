@@ -187,6 +187,34 @@ Each extension type lives in a subdirectory under `opencode/`:
 | `tools/` | `.ts` | Custom tools |
 | `themes/` | `.json` | Color themes |
 
+## OpenKit agent + tools
+
+This package includes OpenCode-ready plugin management helpers:
+
+- `openkit-search` — search for OpenKit-compatible packages
+- `openkit-add` — install and register a package in `opencode.json`
+- `openkit-remove` — remove a package and clean copied extension files
+- `openkit` skill — guidance for selecting the best plugin using OpenKit search + `curl`
+- `@openkit-agent` — subagent for plugin discovery and lifecycle management
+
+### Tool usage examples
+
+From your assistant, call these tools directly:
+
+- `openkit-search` with `query: "discord moderation"`
+- `openkit-add` with `packageName: "@example/opencode-discord"`
+- `openkit-remove` with `packageName: "@example/opencode-discord"`
+
+### Agent usage
+
+Use `@openkit-agent` when users ask to:
+
+- Find the best plugin for a capability
+- Install/add a plugin package
+- Remove/uninstall a plugin package
+
+The agent uses the OpenKit tools above and follows the `openkit` skill workflow for candidate evaluation and recommendations.
+
 ## Publish checklist
 
 Before running `npm publish`:
