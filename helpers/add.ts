@@ -33,7 +33,7 @@ export async function add(packageName: string, dir: string): Promise<void> {
     const { copied } = await installExtensions({
       name: packageName,
       targetDir: dir,
-      sourceUrl: `file://${path.join(packageRoot, "helpers", "_marker.js")}`,
+      sourceUrl: `file://${path.join(packageRoot, "helpers", "install.ts")}`,
       dirs: EXTENSION_DIRS,
     })
     console.log(`[openkit] copied ${copied.length} extension file(s)`)

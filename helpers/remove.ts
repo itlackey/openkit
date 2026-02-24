@@ -87,7 +87,7 @@ function removeMatchingFiles(src: string, dest: string): number {
   if (fs.existsSync(dest)) {
     const remaining = fs.readdirSync(dest)
     if (remaining.length === 0) {
-      fs.rmdirSync(dest)
+      fs.rmSync(dest, { recursive: true })
     }
   }
 
