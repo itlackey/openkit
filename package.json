@@ -29,6 +29,9 @@
     "url": "https://github.com/itlackey/openkit/issues"
   },
   "license": "CC-BY-4.0",
+  "bin": {
+    "openkit": "./dist/cli.js"
+  },
   "files": [
     "dist",
     "src",
@@ -50,7 +53,7 @@
     }
   },
   "scripts": {
-    "build": "bun build ./src/index.ts ./src/install.ts --outdir ./dist --target node --format esm",
+    "build": "bun build ./src/index.ts ./src/install.ts ./src/cli.ts --outdir ./dist --target node --format esm",
     "build:types": "tsc --project ./tsconfig.build.json && node -e \"const fs=require('node:fs');fs.writeFileSync('dist/index.d.ts','export { plugin } from \\\"./src/plugin\\\"\\\\n');fs.writeFileSync('dist/install.d.ts','export { createInstallerPlugin, installExtensions, type InstallerOptions } from \\\"./src/install\\\"\\\\n');\"",
     "prepublishOnly": "npm run build && npm run build:types"
   },

@@ -12,6 +12,47 @@ OpenKit is built for teams publishing **OpenCode plugins** and **OpenCode extens
 - **Safe installs by default**: existing user files are preserved (`overwrite: false`).
 - **Works with real plugin code**: use standalone installer mode or compose it into your own plugin.
 - **Low maintenance**: no custom copy scripts or postinstall hacks.
+- **CLI included**: add, remove, and search for openkit packages directly from the command line.
+
+## CLI
+
+OpenKit includes a CLI for managing openkit-compatible packages in your project.
+
+### Search for packages
+
+Find openkit-compatible packages on npm and GitHub:
+
+```bash
+npx @itlackey/openkit search [query]
+```
+
+Searches npm for packages with the `openkit` keyword and GitHub for repositories with the `openkit` topic.
+
+### Add a package
+
+Install a package and copy its extensions into your project:
+
+```bash
+npx @itlackey/openkit add <package>
+```
+
+This will:
+1. Install the npm package.
+2. Copy its `opencode/` assets into your project's `.opencode/` directory.
+3. Register the package in `opencode.json`.
+
+### Remove a package
+
+Remove a package and clean up its extensions:
+
+```bash
+npx @itlackey/openkit remove <package>
+```
+
+This will:
+1. Remove copied extension files from `.opencode/`.
+2. Unregister the package from `opencode.json`.
+3. Uninstall the npm package.
 
 ## Quick start
 
