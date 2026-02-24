@@ -30,7 +30,7 @@
   },
   "license": "CC-BY-4.0",
   "bin": {
-    "openkit": "./dist/cli.js"
+    "openkit": "./dist/src/cli.js"
   },
   "files": [
     "dist",
